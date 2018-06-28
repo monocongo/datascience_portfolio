@@ -1,0 +1,269 @@
+Guided Project: Answering Business Questions using SQL
+
+
+1/8
+
+Learn
+
+In this guided project, we're going to practice using our SQL skills to answer business questions. In each step, we'll give you a task, and you'll need to:
+
+Write a SQL query to extract the relevant data
+Create plots where necessary to visualize the data
+Write a short paragraph, drawing conclusions and explaining the data and/or visualizations.
+We'll continue to use the Chinook database that we've used in earlier missions of this course. The Chinook database is provided as a SQLite database file called chinook.db. A copy of the database schema is below - you'll need to come back to this step often to consult the schema as you write your queries.
+
+chinook schema
+
+It's worth remembering that our database retains 'state', so if we run a query with a CREATE or DROP twice, the query will fail. We should have the skills to get ourselves untangled from these situations, but if you have trouble, or if you manage to lock your database, we have provided a chinook-unmodified.db file that you can copy over the chinook.db to restore it back to its initial state (see this blog post on how to run shell commands within a Jupyter notebook).
+
+Most of the queries you'll create in this guided project are more difficult than what you have written in the earlier missions in this course, and we'll provide you with less explicit guidance on how to answer each business question. Don't be discouraged if working on these queries takes several iterations.
+
+We have provided a solution notebook (accessible via the icon at the top of the interface), however we recommend only consulting this as a last resort, or when you have finished and would like to see how we went about the step. Also keep in mind that there are often several 'correct' ways to write these queries, and that our solution notebook shows just one of these.
+
+
+2/8
+
+n the SQL fundamentals course we learned how to use python's SQLite module and pandas to write queries that produced dataframe outputs. The advantage of dataframe outputs is that they will display as tables in Jupyter notebook. We can also take advantage of pandas plotting methods to easily create visualizations of our tables inside our Jupyter notebook.
+
+If you aren't familiar with pandas plotting methods, we recommend this guided project from our Data Visualization course, which teaches some of these methods. The visualization section of the pandas docs will be useful - we encourage you to have a look and see if you can use a few plot types that you might not have already used before.
+
+Previously, we used the sqlite3.connect() function to create a connection object, and passed that to the pandas.read_sql_query() function. In this project, we'll use a similar approach, with two important changes:
+
+We'll create some helper functions in python to save some time.
+We'll use a context manager to handle the connection to the SQLite database.
+Context managers make our life easy by taking care of opening and closing the connection to the database, as well as making sure we don't accidentally make changes to the database if one of our queries has an error. If you're interested in learning more about context managers, we recommend this excellent article by Jeff Knupp. For now, all we need to know is that we'll use the with statement to access the context manager that's built-in to the SQLite module:
+
+
+with sqlite3.connect('chinook.db') as conn:
+    # we can now access `conn`
+    # inside an indented block
+    query_result = pd.read_sql(my_query, conn)
+With a few extra lines, we can turn this code into a function:
+
+
+def run_query(q):
+    with sqlite3.connect('chinook.db') as conn:
+        return pd.read_sql(q, conn)
+By returning the dataframe, we can just run our function as the last line of a Jupyter cell and it will print the results nicely for us.
+
+We'll also create a function to run SQL queries that don't return tables, like CREATE VIEW. In this instance, we don't need to use pandas, we can simply use the SQLite module's connection.execute() method:
+
+
+with sqlite3.connect('chinook.db') as conn:
+    conn.isolation_level = None
+    conn.execute(c)
+The conn.isolation_level = None line above tells SQLite to autocommit any changes - we'll talk more about that in the next mission.
+
+Lastly, we'll make a function that uses our run_query() function to return a list of all tables and views in our databases - this is handy to quickly check the state of our database as we work. To make this easier, the query you'll need to use in this function is below:
+
+
+SELECT
+    name,
+    type
+FROM sqlite_master
+WHERE type IN ("table","view");
+Instructions
+
+Import the SQLite, pandas and matplotlib modules, and use the magic command %matplotlib inline to make sure any plots render in the notebook.
+Create a run_query() function, that takes a SQL query as an argument and returns a pandas dataframe of that query.
+Create a run_command() function that takes a SQL command as an argument and executes it using the sqlite module.
+Create a show_tables() function that calls the run_query() function to return a list of all tables and views in the database.
+Run the show_tables() function.
+
+
+3/8
+
+The Chinook record store has just signed a deal with a new record label, and you've been tasked with selecting the first three albums that will be added to the store, from a list of four. All four albums are by artists that don't have any tracks in the store right now - we have the artist names, and the genre of music they produce:
+
+Artist Name	Genre
+Regal	Hip-Hop
+Red Tone	Punk
+Meteor and the Girls	Pop
+Slim Jim Bites	Blues
+The record label specializes in artists from the USA, and they have given Chinook some money to advertise the new albums in the USA, so we're interested in finding out which genres sell the best in the USA.
+
+You'll need to write a query to find out which genres sell the most tracks in the USA, and then create a visualization of that data using pandas.
+
+You can run the run_query() function twice. Once at the end of a cell to display the results, and then a second time to assign the output of yours to a variable name:
+
+
+genre_sales_usa = run_query(q)
+You can then use the DataFrame.plot() method or any of the other pandas plotting methods to produce your visualization. You can choose the sort of plot you think best communicates the data, but if you're stuck, a bar plot or horizontal bar plot will work well.
+
+Note that if you use the DataFrame.set_index() method before you create your plot, your axis labels will be automatically added to your plot as shown in this blogpost.
+
+Lastly, you should write up a summary of your findings, and make a recommendation for the three artists whose albums we should purchase for the store.
+
+Instructions
+
+Write a query that returns each genre, with the number of tracks sold in absolute numbers and in percentages.
+Create a plot to show this data.
+Write a paragraph that interprets the data and makes a recommendation for the three artists whose albums we should purchase for the store, based on sales of tracks from their genres.
+
+
+4/8
+
+Each customer for the Chinook store gets assigned to a sales support agent within the company when they first make a purchase. You have been asked to analyze the purchases of customers belonging to each employee to see if any sales support agent is performing either better or worse than the others.
+
+You might like to consider whether any extra columns from the employee table explain any variance you see, or whether the variance might instead be indicative of employee performance.
+
+Instructions
+
+Write a query that finds the total dollar amount of sales assigned to each sales support agent within the company. Add any extra attributes for that employee that you find are relevant to the analysis.
+Create a plot of the results of your query.
+Write a short statement describing your results, and providing a possible interpretation.
+
+5/8
+
+Your next task is to analyze the sales data for customers from each different country. You have been given guidance to use the country value from the customers table, and ignore the country from the billing address in the invoice table.
+
+In particular, you have been directed to calculate data, for each country, on the:
+
+total number of customers
+total value of sales
+average value of sales per customer
+average order value
+Because there are a number of countries with only one customer, you should group these customers as "Other" in your analysis. You can use the following 'trick' to force the ordering of "Other" to last in your analysis.
+
+If there is a particular value that you would like to force to the top or bottom of results, you can put what would normally be your most outer query in a subquery with a case statement that adds a numeric column, and then in the outer query sort by that column. Here's an example - let's start by creating a view so we're working with a manageable number of rows:
+
+
+c = '''
+CREATE VIEW top_5_names AS
+     SELECT
+         first_name,
+         count(customer_id) count
+     FROM customer
+     GROUP by 1
+     ORDER by 2 DESC
+     LIMIT 5;
+'''
+run_command(c)
+​
+q = 'SELECT * FROM top_5_names;'
+run_query(q)
+first_name	count
+0	Frank	2
+1	Mark	2
+2	Aaron	1
+3	Alexandre	1
+4	Astrid	1
+Next, inside a subquery, we'll select all values from our view and add a sorting column using a case statement, before sorting using that new column in the outer query.
+
+
+q = '''
+SELECT
+    first_name,
+    count
+FROM
+    (
+    SELECT
+        t5.*,
+        CASE
+            WHEN t5.first_name = "Mark" THEN 1
+            ELSE 0
+        END AS sort
+    FROM top_5_names t5
+   )
+ORDER BY sort ASC
+'''
+run_query(q)
+first_name	count
+0	Frank	2
+1	Aaron	1
+2	Alexandre	1
+3	Astrid	1
+4	Mark	2
+You should be able to adapt this technique into your query to force 'Other' to the bottom of your results. When working through this exercise, you will need multiple subqueries and joins. Imagine you work on a team of data analysts, and write your query so that it will be able to be easily read and understood by your colleagues.
+
+In the next screen we'll create some visualizations and interpret the data - for now we'll just write our query.
+
+Instructions
+
+Write a query that collates data on purchases from different countries. For each country, include:
+total number of customers
+total value of sales
+average value of sales per customer
+average order value
+Where a country has only one customer, collect them into an "Other" group.
+The results should be sorted by the total sales from highest to lowest, with the "Other" group at the very bottom.
+
+6/8
+
+Learn
+Learn
+
+Now that we have our data, we've been asked to create a series of visualizations which communicate our findings, and then make recommendations on which countries may have potential for growth, so the Chinook marketing team can create some new advertising campaigns.
+
+When we're working with data that has many dimensions, it can be tempting to try and communicate every dimension in a single plot. This often results in complex and hard to read visualizations. Instead of this, we should create different plots for each dimension.
+
+Think about the best way to communicate the data - this includes not only plot types, but how you use color, spacing and layout. As an example, you might decide to use the same color across your four plots to represent each country, so it's easier to understand the chart as a whole.
+
+You might like to review our Storytelling Through Data Visualization course to re-familiarize yourself with some of these techniques.
+
+Instructions
+
+For each dimension, create a visualization which demonstrates the data we collated in the previous step.
+You should decide whether the "Other" group is relevant to your analysis and make decisions on where to include it (if anywhere) in your visualizations.
+Write a few sentences interpreting your data and visualizations, and make one or more recommendations to the marketing team on which countries have potential for growth.
+
+The Chinook store is setup in a way that allows customer to make purchases in one of the two ways:
+
+purchase a whole album
+purchase a collection of one or more individual tracks.
+The store does not let customers purchase a whole album, and then add individual tracks to that same purchase (unless they do that by choosing each track manually). When customers purchase albums they are charged the same price as if they had purchased each of those tracks separately.
+
+Management are currently considering changing their purchasing strategy to save money. The strategy they are considering is to purchase only the most popular tracks from each album from record companies, instead of purchasing every track from an album.
+
+We have been asked to find out what percentage of purchases are individual tracks vs whole albums, so that management can use this data to understand the effect this decision might have on overall revenue.
+
+It is very common when you are performing an analysis to have 'edge cases' which prevent you from getting a 100% accurate answer to your question. In this instance, we have two edge cases to consider:
+
+Albums that have only one or two tracks are likely to be purchased by customers as part of a collection of individual tracks.
+Customers may decide to manually select every track from an album, and then add a few individual tracks from other albums to their purchase.
+In the first case, since our analysis is concerned with maximizing revenue we can safely ignore albums consisting of only a few tracks. The company has previously done analysis to confirm that the second case does not happen often, so we can ignore this case also.
+
+In order to answer the question, we're going to have to identify whether each invoice has all the tracks from an album. We can do this by getting the list of tracks from an invoice and comparing it to the list of tracks from an album. We can find the album to compare the purchase to by looking up the album that one of the purchased tracks belongs to. It doesn't matter which track we pick, since if it's an album purchase, that album will be the same for all tracks.
+
+Up until now, we've only ever compared two single values, using operators like = != and LIKE. To compare two tables of value, we can use the EXCEPT operator that we learned in the previous mission.
+
+Let's say we had four tables in a database, as shown in the diagram below
+
+test tables
+
+We want to find a way to compare the letters columns from test_table_2, and test_table_3 to test_table_1 to see if they they are identical to test_table_1. Let's use EXCEPT with the two identical tables and see what we get with the first two tables:
+
+compare example 1
+
+Here's the table that is returned:
+
+letters
+D
+Now, let's compare what we get with test_table_1 and test_table_3:
+
+compare example 2
+
+If you run this directly in SQLite, you will get no result at all. This is useful to us - we can check whether the exception of two subqueries IS NULL. If we reverse the order of the tables around the EXCEPT operator we get the same thing.
+
+Let's try reversing the order of the EXCEPT operator for the first two tables:
+
+compare example 3
+
+Here, we get a null value even though the two tables are not identical. That's because all of the values for letter in test_table_2 are also in test_table_1, even if test_table_1 has an extra value.
+
+Because of this we need to combine both variations with AND clause:
+
+compare example 4
+
+Once we've made the comparison, we can wrap it in a CASE statement to add a column that tells us if that invoice was an album purchase or not.
+
+You have everything you need to collate data on album vs single track purchases. This is easily the hardest query you have written so far, so take your time, and remember the query writing tips from the first screen!
+
+Instructions
+
+Write a query that categorizes each invoice as either an album purchase or not, and calculates the following summary statistics:
+Number of invoices
+Percentage of invoices
+Write one to two sentences explaining your findings, and making a prospective recommendation on whether the Chinook store should continue to buy full albums from record companies.
+
+
